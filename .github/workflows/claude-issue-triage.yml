@@ -68,7 +68,13 @@ jobs:
             - good first issue: cambio pequeño y bien delimitado.
             - help wanted: necesita ayuda adicional del equipo.
 
-            diagnosis: Markdown en español con exactamente estas secciones, en este orden, usando encabezados de nivel 3:
+            diagnosis: texto en español y en GitHub Flavored Markdown, porque se publica tal cual como comentario del issue. Debe renderizarse bien en GitHub:
+            - Usa listas, negritas y tablas de Markdown cuando ayuden a leer, sin HTML.
+            - Escribe nombres de archivos, funciones y referencias archivo:línea entre comillas invertidas, por ejemplo `game.js:42`.
+            - Pon el código de varias líneas en bloques con triple comilla invertida e indica el lenguaje, por ejemplo js.
+            - No envuelvas el diagnóstico completo en un bloque de código.
+
+            Incluye exactamente estas secciones, en este orden, usando encabezados de nivel 3:
             ### Resumen
             Qué se pide o qué falla, en una o dos frases.
             ### Tipo y severidad
