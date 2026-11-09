@@ -39,7 +39,9 @@ const overlay = document.getElementById('overlay');
 const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
+const themeBtn = document.getElementById('theme-toggle');
 
+let gridColor, blockEdge;
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
 function createBoard() {
@@ -162,6 +164,9 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
   context.globalAlpha = alpha ?? 1;
   context.fillStyle = color;
   context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+  context.strokeStyle = blockEdge;
+  context.lineWidth = 1;
+  context.strokeRect(x * size + 1.5, y * size + 1.5, size - 3, size - 3);
   // highlight
   context.fillStyle = 'rgba(255,255,255,0.12)';
   context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
@@ -169,7 +174,7 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
 }
 
 function drawGrid() {
-  ctx.strokeStyle = '#22222e';
+  ctx.strokeStyle = gridColor;
   ctx.lineWidth = 0.5;
   for (let c = 1; c < COLS; c++) {
     ctx.beginPath();
@@ -300,5 +305,37 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+// ---- Tema claro/oscuro ----
+function applyTheme(theme, save) {
+  document.documentElement.setAttribute('data-theme', theme);
+  if (save) {
+    try { localStorage.setItem('theme', theme); } catch (e) {}
+  }
+  const styles = getComputedStyle(document.documentElement);
+  gridColor = styles.getPropertyValue('--grid').trim();
+  blockEdge = styles.getPropertyValue('--block-edge').trim();
+  themeBtn.textContent = theme === 'dark' ? '☀️ Claro' : '🌙 Oscuro';
+  themeBtn.setAttribute('aria-label', theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro');
+  // En pausa o game over el bucle está cancelado: redibujar a mano.
+  if (current) draw();
+  if (next) drawNext();
+}
+
+themeBtn.addEventListener('click', () => {
+  const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+  applyTheme(dark ? 'light' : 'dark', true);
+  themeBtn.blur(); // evita que Space reactive el botón durante la partida
+});
+
+// Sigue la preferencia del sistema mientras no haya elección guardada.
+const systemQuery = window.matchMedia('(prefers-color-scheme: light)');
+systemQuery.addEventListener('change', e => {
+  let saved = null;
+  try { saved = localStorage.getItem('theme'); } catch (err) {}
+  if (!saved) applyTheme(e.matches ? 'light' : 'dark', false);
+});
+
+applyTheme(document.documentElement.getAttribute('data-theme') || 'dark', false);
 
 init();
