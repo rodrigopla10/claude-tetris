@@ -28,7 +28,8 @@ Lock path: `lockPiece()` → `merge()` → `clearLines()` → `spawn()`. `spawn(
 
 ## Invariants across files
 
-- **Piece type = cell value = color index.** `PIECES[n]` is filled with the value `n`, and that value is written to `board` and used to look up `COLORS[n]`. Index 0 is `null` in both arrays and means an empty cell. A new piece needs matching entries in both; `randomPiece()` picks from `PIECES.length`.
+- **Piece type = cell value = color index.** `PIECES[n]` is filled with the value `n`, and that value is written to `board` and used to look up `colors[n]` in the active skin of `SKINS`. Index 0 is `null` in `PIECES` and in every skin's `colors`, and means an empty cell. A new piece needs matching entries in `PIECES` and in every skin; `randomPiece()` picks from `PIECES.length`.
+- **Skin names live in three places:** the keys of `SKINS` in `game.js`, the `<option>` values of `#skin-select`, and the allow-list in the inline `<head>` script of `index.html`. Board background and grid per skin are `:root[data-skin="..."]` blocks in `style.css`, which must stay after the theme blocks to win over them.
 - **Canvas size is set in HTML, not derived.** `<canvas id="board">` must stay `COLS*BLOCK` × `ROWS*BLOCK` (300×600). `#next-canvas` is 120×120, matching the hardcoded 4-cell grid and `NB = 30` in `drawNext()`.
 - **`dropInterval` is set in two places:** the starting value in `init()` and the level formula in `clearLines()`. Keep them consistent when changing speed.
 - **DOM ids are looked up at load** at the top of `game.js`, so renaming one in `index.html` breaks the script.

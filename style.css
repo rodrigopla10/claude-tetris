@@ -43,6 +43,25 @@
   --block-edge: rgba(0, 0, 0, 0.35);
 }
 
+/* ---- Skins: van después de los temas para ganarles con la misma especificidad ---- */
+:root[data-skin="neon"] {
+  --board-bg: #000000;
+  --border: #0b5563;
+  --grid: #0e1420;
+  --shadow: rgba(0, 240, 255, 0.3);
+}
+
+:root[data-skin="pastel"] {
+  --board-bg: #352f45;
+  --grid: #413a54;
+  --block-edge: rgba(255, 255, 255, 0.45);
+}
+
+:root[data-skin="pixel"] {
+  --board-bg: #1c1c38;
+  --grid: #2a2a50;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -81,7 +100,8 @@ body {
   text-shadow: 0 0 16px var(--accent-glow);
 }
 
-#theme-toggle {
+#theme-toggle,
+#skin-select {
   background: var(--kbd-bg);
   color: var(--text);
   border: 1px solid var(--kbd-border);
@@ -92,7 +112,8 @@ body {
   cursor: pointer;
 }
 
-#theme-toggle:hover {
+#theme-toggle:hover,
+#skin-select:hover {
   border-color: var(--accent);
 }
 

@@ -13,6 +13,11 @@
         t = window.matchMedia && matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
       }
       document.documentElement.setAttribute('data-theme', t);
+
+      var s = null;
+      try { s = localStorage.getItem('skin'); } catch (e) {}
+      if (['retro', 'neon', 'pastel', 'pixel'].indexOf(s) === -1) s = 'retro';
+      document.documentElement.setAttribute('data-skin', s);
     })();
   </script>
   <link rel="stylesheet" href="style.css" />
@@ -22,6 +27,12 @@
     <div class="header">
       <h1 class="title">TETRIS</h1>
       <button id="theme-toggle" type="button"></button>
+      <select id="skin-select" aria-label="Cambiar skin">
+        <option value="retro">Retro</option>
+        <option value="neon">Neon</option>
+        <option value="pastel">Pastel</option>
+        <option value="pixel">Pixel art</option>
+      </select>
     </div>
     <div class="game">
     <div class="game-container">

@@ -4,17 +4,70 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30;
 
-const COLORS = [
-  null,
-  '#4dd0e1', // I - cyan
-  '#ffd54f', // O - yellow
-  '#ba68c8', // T - purple
-  '#81c784', // S - green
-  '#e57373', // Z - red
-  '#90caf9', // J - pale blue
-  '#ffb74d', // L - orange
-  '#b0bec5', // Nut - steel
-];
+// Each skin's colors follow the indices of PIECES (0 is null, an empty cell).
+// drawBlock and drawHole receive the cell's top-left corner in pixels.
+const SKINS = {
+  retro: {
+    colors: [
+      null,
+      '#4dd0e1', // I - cyan
+      '#ffd54f', // O - yellow
+      '#ba68c8', // T - purple
+      '#81c784', // S - green
+      '#e57373', // Z - red
+      '#90caf9', // J - pale blue
+      '#ffb74d', // L - orange
+      '#b0bec5', // Nut - steel
+    ],
+    drawBlock: drawRetroBlock,
+    drawHole: drawRetroHole,
+  },
+  neon: {
+    colors: [
+      null,
+      '#00f0ff', // I
+      '#fff200', // O
+      '#d000ff', // T
+      '#39ff14', // S
+      '#ff2052', // Z
+      '#2e7bff', // J
+      '#ff8c00', // L
+      '#c8d6e5', // Nut
+    ],
+    drawBlock: drawNeonBlock,
+    drawHole: drawNeonHole,
+  },
+  pastel: {
+    colors: [
+      null,
+      '#aee6e6', // I
+      '#fdeaa8', // O
+      '#d7bde2', // T
+      '#b5e8c0', // S
+      '#f7b7b2', // Z
+      '#b8d0f0', // J
+      '#fbd0a5', // L
+      '#d5d8e0', // Nut
+    ],
+    drawBlock: drawPastelBlock,
+    drawHole: drawPastelHole,
+  },
+  pixel: {
+    colors: [
+      null,
+      '#00b8d8', // I
+      '#f8c800', // O
+      '#a040e0', // T
+      '#30b830', // S
+      '#e03030', // Z
+      '#3068e8', // J
+      '#f07800', // L
+      '#98a0b0', // Nut
+    ],
+    drawBlock: drawPixelBlock,
+    drawHole: drawPixelHole,
+  },
+};
 
 const PIECES = [
   null,
@@ -44,7 +97,9 @@ const overlayTitle = document.getElementById('overlay-title');
 const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeBtn = document.getElementById('theme-toggle');
+const skinSelect = document.getElementById('skin-select');
 
+let skin = SKINS.retro;
 let gridColor, blockEdge;
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 
@@ -164,17 +219,125 @@ function updateHUD() {
 
 function drawBlock(context, x, y, colorIndex, size, alpha) {
   if (!colorIndex) return;
-  const color = COLORS[colorIndex];
   context.globalAlpha = alpha ?? 1;
+  skin.drawBlock(context, x * size, y * size, size, skin.colors[colorIndex]);
+  context.globalAlpha = 1;
+}
+
+function drawRetroBlock(context, px, py, size, color) {
   context.fillStyle = color;
-  context.fillRect(x * size + 1, y * size + 1, size - 2, size - 2);
+  context.fillRect(px + 1, py + 1, size - 2, size - 2);
   context.strokeStyle = blockEdge;
   context.lineWidth = 1;
-  context.strokeRect(x * size + 1.5, y * size + 1.5, size - 3, size - 3);
+  context.strokeRect(px + 1.5, py + 1.5, size - 3, size - 3);
   // highlight
   context.fillStyle = 'rgba(255,255,255,0.12)';
-  context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
-  context.globalAlpha = 1;
+  context.fillRect(px + 1, py + 1, size - 2, 4);
+}
+
+function drawRetroHole(context, px, py, size, color) {
+  context.fillStyle = color;
+  context.beginPath();
+  context.rect(px + 1, py + 1, size - 2, size - 2);
+  context.arc(px + size / 2, py + size / 2, size * 0.4, 0, Math.PI * 2);
+  context.fill('evenodd');
+}
+
+// Sub-path of its own: without the moveTo, stroking joins the circle to the previous shape.
+function addCircle(context, cx, cy, radius) {
+  context.moveTo(cx + radius, cy);
+  context.arc(cx, cy, radius, 0, Math.PI * 2);
+}
+
+// Paints the current path. The glow must end here or it would spread to everything drawn next.
+function paintNeon(context, size, color) {
+  context.strokeStyle = color;
+  context.lineWidth = 2;
+  context.shadowColor = color;
+  context.shadowBlur = size * 0.5;
+  context.stroke();
+  context.shadowBlur = 0;
+  context.globalAlpha *= 0.3;
+  context.fillStyle = color;
+  context.fill('evenodd');
+}
+
+function drawNeonBlock(context, px, py, size, color) {
+  context.beginPath();
+  context.rect(px + 2, py + 2, size - 4, size - 4);
+  paintNeon(context, size, color);
+}
+
+function drawNeonHole(context, px, py, size, color) {
+  context.beginPath();
+  context.rect(px + 2, py + 2, size - 4, size - 4);
+  addCircle(context, px + size / 2, py + size / 2, size * 0.3);
+  paintNeon(context, size, color);
+}
+
+function addRoundedSquare(context, px, py, side, radius) {
+  const right = px + side, bottom = py + side;
+  context.moveTo(px + radius, py);
+  context.arcTo(right, py, right, bottom, radius);
+  context.arcTo(right, bottom, px, bottom, radius);
+  context.arcTo(px, bottom, px, py, radius);
+  context.arcTo(px, py, right, py, radius);
+  context.closePath();
+}
+
+function paintPastel(context, color) {
+  context.fillStyle = color;
+  context.fill('evenodd');
+  context.strokeStyle = blockEdge;
+  context.lineWidth = 1;
+  context.stroke();
+}
+
+function drawPastelBlock(context, px, py, size, color) {
+  context.beginPath();
+  addRoundedSquare(context, px + 1.5, py + 1.5, size - 3, size * 0.25);
+  paintPastel(context, color);
+}
+
+function drawPastelHole(context, px, py, size, color) {
+  context.beginPath();
+  addRoundedSquare(context, px + 1.5, py + 1.5, size - 3, size * 0.25);
+  addCircle(context, px + size / 2, py + size / 2, size * 0.35);
+  paintPastel(context, color);
+}
+
+// Every pixel-art tile is a PIXEL_GRID × PIXEL_GRID mosaic scaled to the block size.
+const PIXEL_GRID = 10;
+
+function fillPixels(context, px, py, size, color, isOn) {
+  const at = n => Math.round(n * size / PIXEL_GRID);
+  context.fillStyle = color;
+  context.beginPath();
+  for (let j = 0; j < PIXEL_GRID; j++)
+    for (let i = 0; i < PIXEL_GRID; i++)
+      if (isOn(i, j)) context.rect(px + at(i), py + at(j), at(i + 1) - at(i), at(j + 1) - at(j));
+  context.fill();
+}
+
+// Only translucent layers go over the base color, so globalAlpha (ghost piece) applies to all of them.
+function drawPixelTile(context, px, py, size, color, isSolid) {
+  const last = PIXEL_GRID - 1;
+  const isEdge = (i, j) => i === 0 || j === 0 || i === last || j === last;
+  fillPixels(context, px, py, size, color, isSolid);
+  fillPixels(context, px, py, size, 'rgba(0,0,0,0.14)', (i, j) =>
+    isSolid(i, j) && !isEdge(i, j) && (i + j * 2) % 4 === 0);
+  fillPixels(context, px, py, size, 'rgba(255,255,255,0.4)', (i, j) =>
+    (i === 0 || j === 0) && i < last && j < last);
+  fillPixels(context, px, py, size, 'rgba(0,0,0,0.35)', (i, j) => i === last || j === last);
+}
+
+function drawPixelBlock(context, px, py, size, color) {
+  drawPixelTile(context, px, py, size, color, () => true);
+}
+
+function drawPixelHole(context, px, py, size, color) {
+  const center = (PIXEL_GRID - 1) / 2;
+  drawPixelTile(context, px, py, size, color, (i, j) => (i - center) ** 2 + (j - center) ** 2 > 16);
 }
 
 // An empty cell fully ringed by nut cells. Purely visual: the cell stays 0, so it
@@ -189,11 +352,7 @@ function isNutHole(grid, r, c) {
 
 function drawNutHole(context, x, y, size, alpha) {
   context.globalAlpha = alpha ?? 1;
-  context.fillStyle = COLORS[NUT];
-  context.beginPath();
-  context.rect(x * size + 1, y * size + 1, size - 2, size - 2);
-  context.arc(x * size + size / 2, y * size + size / 2, size * 0.4, 0, Math.PI * 2);
-  context.fill('evenodd');
+  skin.drawHole(context, x * size, y * size, size, skin.colors[NUT]);
   context.globalAlpha = 1;
 }
 
@@ -339,20 +498,25 @@ document.addEventListener('keydown', e => {
 
 restartBtn.addEventListener('click', init);
 
+// Colores de canvas que dependen del tema y de la skin: lee el CSS y redibuja.
+function refreshCanvasColors() {
+  const styles = getComputedStyle(document.documentElement);
+  gridColor = styles.getPropertyValue('--grid').trim();
+  blockEdge = styles.getPropertyValue('--block-edge').trim();
+  // En pausa o game over el bucle está cancelado: redibujar a mano.
+  if (current) draw();
+  if (next) drawNext();
+}
+
 // ---- Tema claro/oscuro ----
 function applyTheme(theme, save) {
   document.documentElement.setAttribute('data-theme', theme);
   if (save) {
     try { localStorage.setItem('theme', theme); } catch (e) {}
   }
-  const styles = getComputedStyle(document.documentElement);
-  gridColor = styles.getPropertyValue('--grid').trim();
-  blockEdge = styles.getPropertyValue('--block-edge').trim();
   themeBtn.textContent = theme === 'dark' ? '☀️ Claro' : '🌙 Oscuro';
   themeBtn.setAttribute('aria-label', theme === 'dark' ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro');
-  // En pausa o game over el bucle está cancelado: redibujar a mano.
-  if (current) draw();
-  if (next) drawNext();
+  refreshCanvasColors();
 }
 
 themeBtn.addEventListener('click', () => {
@@ -369,6 +533,33 @@ systemQuery.addEventListener('change', e => {
   if (!saved) applyTheme(e.matches ? 'light' : 'dark', false);
 });
 
+// ---- Skins ----
+function applySkin(name, save) {
+  const valid = Object.keys(SKINS).includes(name) ? name : 'retro';
+  skin = SKINS[valid];
+  document.documentElement.setAttribute('data-skin', valid);
+  skinSelect.value = valid;
+  if (save) {
+    try { localStorage.setItem('skin', valid); } catch (e) {}
+  }
+  refreshCanvasColors();
+}
+
+skinSelect.addEventListener('change', () => {
+  applySkin(skinSelect.value, true);
+  skinSelect.blur(); // evita que las flechas y Space cambien la skin durante la partida
+});
+
+// Abrir y cerrar el selector sin cambiar de opción no dispara change y deja aquí el foco.
+skinSelect.addEventListener('keydown', e => {
+  const changesOption = e.key.length === 1 || e.key.startsWith('Arrow'); // incluye la búsqueda por letra
+  if (!changesOption || e.ctrlKey || e.altKey || e.metaKey) return;
+  if (e.code !== 'KeyP' && (paused || gameOver || !current)) return;
+  e.preventDefault();
+  skinSelect.blur();
+});
+
+applySkin(document.documentElement.getAttribute('data-skin'), false);
 applyTheme(document.documentElement.getAttribute('data-theme') || 'dark', false);
 
 init();
