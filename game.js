@@ -13,6 +13,7 @@ const COLORS = [
   '#e57373', // Z - red
   '#7986cb', // J - indigo
   '#ffb74d', // L - orange
+  '#b0bec5', // Nut - steel
 ];
 
 const PIECES = [
@@ -24,7 +25,10 @@ const PIECES = [
   [[5,5,0],[0,5,5],[0,0,0]],                  // Z
   [[6,0,0],[6,6,6],[0,0,0]],                  // J
   [[0,0,7],[7,7,7],[0,0,0]],                  // L
+  [[8,8,8],[8,0,8],[8,8,8]],                  // Nut
 ];
+
+const NUT = 8;
 
 const LINE_SCORES = [0, 100, 300, 500, 800];
 
@@ -47,7 +51,7 @@ function createBoard() {
 }
 
 function randomPiece() {
-  const type = Math.floor(Math.random() * 7) + 1;
+  const type = Math.floor(Math.random() * (PIECES.length - 1)) + 1;
   const shape = PIECES[type].map(row => [...row]);
   return { type, shape, x: Math.floor(COLS / 2) - Math.floor(shape[0].length / 2), y: 0 };
 }
@@ -168,6 +172,31 @@ function drawBlock(context, x, y, colorIndex, size, alpha) {
   context.globalAlpha = 1;
 }
 
+// An empty cell fully ringed by nut cells. Purely visual: the cell stays 0, so it
+// collides with nothing and keeps its row from clearing.
+function isNutHole(grid, r, c) {
+  if (grid[r][c]) return false;
+  for (let dr = -1; dr <= 1; dr++)
+    for (let dc = -1; dc <= 1; dc++)
+      if ((dr || dc) && grid[r + dr]?.[c + dc] !== NUT) return false;
+  return true;
+}
+
+function drawNutHole(context, x, y, size, alpha) {
+  context.globalAlpha = alpha ?? 1;
+  context.fillStyle = COLORS[NUT];
+  context.beginPath();
+  context.rect(x * size + 1, y * size + 1, size - 2, size - 2);
+  context.arc(x * size + size / 2, y * size + size / 2, size * 0.4, 0, Math.PI * 2);
+  context.fill('evenodd');
+  context.globalAlpha = 1;
+}
+
+function drawCell(context, grid, r, c, x, y, size, alpha) {
+  if (isNutHole(grid, r, c)) drawNutHole(context, x, y, size, alpha);
+  else drawBlock(context, x, y, grid[r][c], size, alpha);
+}
+
 function drawGrid() {
   ctx.strokeStyle = '#22222e';
   ctx.lineWidth = 0.5;
@@ -192,19 +221,21 @@ function draw() {
   // board
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++)
-      drawBlock(ctx, c, r, board[r][c], BLOCK);
+      drawCell(ctx, board, r, c, c, r, BLOCK);
+
+  // the piece that didn't fit is not part of the final board
+  if (gameOver) return;
 
   // ghost
   const gy = ghostY();
   for (let r = 0; r < current.shape.length; r++)
     for (let c = 0; c < current.shape[r].length; c++)
-      if (current.shape[r][c])
-        drawBlock(ctx, current.x + c, gy + r, current.shape[r][c], BLOCK, 0.2);
+      drawCell(ctx, current.shape, r, c, current.x + c, gy + r, BLOCK, 0.2);
 
   // current piece
   for (let r = 0; r < current.shape.length; r++)
     for (let c = 0; c < current.shape[r].length; c++)
-      drawBlock(ctx, current.x + c, current.y + r, current.shape[r][c], BLOCK);
+      drawCell(ctx, current.shape, r, c, current.x + c, current.y + r, BLOCK);
 }
 
 function drawNext() {
@@ -215,12 +246,13 @@ function drawNext() {
   const offY = Math.floor((4 - shape.length) / 2);
   for (let r = 0; r < shape.length; r++)
     for (let c = 0; c < shape[r].length; c++)
-      drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NB);
+      drawCell(nextCtx, shape, r, c, offX + c, offY + r, NB);
 }
 
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
+  draw();
   overlayTitle.textContent = 'GAME OVER';
   overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
   overlay.classList.remove('hidden');
@@ -252,6 +284,7 @@ function loop(ts) {
       lockPiece();
     }
   }
+  if (gameOver) return; // endGame() already drew the final frame
   draw();
   animId = requestAnimationFrame(loop);
 }

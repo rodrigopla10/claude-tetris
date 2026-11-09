@@ -28,7 +28,7 @@ Lock path: `lockPiece()` → `merge()` → `clearLines()` → `spawn()`. `spawn(
 
 ## Invariants across files
 
-- **Piece type = cell value = color index.** `PIECES[n]` is filled with the value `n`, and that value is written to `board` and used to look up `COLORS[n]`. Index 0 is `null` in both arrays and means an empty cell. A new piece needs matching entries in both, and `randomPiece()` hardcodes the count of 7.
+- **Piece type = cell value = color index.** `PIECES[n]` is filled with the value `n`, and that value is written to `board` and used to look up `COLORS[n]`. Index 0 is `null` in both arrays and means an empty cell. A new piece needs matching entries in both; `randomPiece()` picks from `PIECES.length`.
 - **Canvas size is set in HTML, not derived.** `<canvas id="board">` must stay `COLS*BLOCK` × `ROWS*BLOCK` (300×600). `#next-canvas` is 120×120, matching the hardcoded 4-cell grid and `NB = 30` in `drawNext()`.
 - **`dropInterval` is set in two places:** the starting value in `init()` and the level formula in `clearLines()`. Keep them consistent when changing speed.
 - **DOM ids are looked up at load** at the top of `game.js`, so renaming one in `index.html` breaks the script.
@@ -43,4 +43,3 @@ User-facing text and the README are in Spanish (`lang="es"`, e.g. `PAUSA`, `Rein
 Found by reading the code. Remove these entries once fixed.
 
 - `togglePause()` never hides the overlay on resume, so the game continues behind the `PAUSA` overlay.
-- `endGame()` cancels `animId`, but when it is reached from inside `loop()` (a gravity lock), `loop()` then schedules the next frame anyway. The loop keeps running after game over because it never checks `gameOver`.
