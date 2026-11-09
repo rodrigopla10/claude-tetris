@@ -231,3 +231,63 @@ kbd {
 #restart-btn:hover {
   background: var(--accent-hover);
 }
+
+/* ---- Menú de pausa ---- */
+#pause-menu {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#pause-menu[hidden] {
+  display: none;
+}
+
+#pause-menu button,
+#start-level {
+  background: var(--kbd-bg);
+  color: var(--text);
+  border: 1px solid var(--kbd-border);
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#pause-menu button {
+  padding: 10px 16px;
+}
+
+#pause-menu button:hover,
+#start-level:hover {
+  border-color: var(--accent);
+}
+
+#pause-menu #resume-btn {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-weight: 700;
+}
+
+#pause-menu #resume-btn:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+#pause-controls {
+  padding: 4px 8px;
+}
+
+.start-level {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+#start-level {
+  padding: 6px 8px;
+}

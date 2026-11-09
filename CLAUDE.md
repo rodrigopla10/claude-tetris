@@ -30,9 +30,9 @@ Lock path: `lockPiece()` → `merge()` → `clearLines()` → `spawn()`. `spawn(
 
 - **Piece type = cell value = color index.** `PIECES[n]` is filled with the value `n`, and that value is written to `board` and used to look up `COLORS[n]`. Index 0 is `null` in both arrays and means an empty cell. A new piece needs matching entries in both; `randomPiece()` picks from `PIECES.length`.
 - **Canvas size is set in HTML, not derived.** `<canvas id="board">` must stay `COLS*BLOCK` × `ROWS*BLOCK` (300×600). `#next-canvas` is 120×120, matching the hardcoded 4-cell grid and `NB = 30` in `drawNext()`.
-- **`dropInterval` is set in two places:** the starting value in `init()` and the level formula in `clearLines()`. Keep them consistent when changing speed.
+- **`dropIntervalFor(level)` is the only speed formula.** `init()` and `clearLines()` both use it to set `dropInterval`. `level` is `startLevel + floor(lines / 10)`, and `init()` reads `startLevel` from `#start-level`, so a new choice only applies to the next game.
 - **DOM ids are looked up at load** at the top of `game.js`, so renaming one in `index.html` breaks the script.
-- **The `.hidden` class on `#overlay` is the only thing that hides it.** The overlay is shared by the pause and game-over states, and `game.js` sets its text for each.
+- **The `.hidden` class on `#overlay` is the only thing that hides it.** The overlay is shared by the pause and game-over states, and `game.js` sets its text for each. `#pause-menu` is visible only while paused and `#restart-btn` only otherwise; `closeOverlay()` restores that default and clears focus, so a hidden control can't react to `Space` or the arrow keys.
 
 ## Conventions
 
@@ -41,5 +41,3 @@ User-facing text and the README are in Spanish (`lang="es"`, e.g. `PAUSA`, `Rein
 ## Known issues
 
 Found by reading the code. Remove these entries once fixed.
-
-- `togglePause()` never hides the overlay on resume, so the game continues behind the `PAUSA` overlay.
